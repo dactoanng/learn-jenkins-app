@@ -71,30 +71,8 @@ pipeline {
                 }
             }
         }
-        stage('Deploy staging') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
-                    echo "Small changes"
-                    npm install netlify-cli node-jq
-                    node_modules/.bin/netlify --version
-                    echo "Deploy to staging SiteID: $NETLIFY_SITE_ID"
-                    node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build --json > deploy_output.json
-                '''
-                script{
-                    env.STAGING_URL = sh (script: "node_modules/.bin/node-jq -r '.deploy_url' deploy_output.json", returnStdout:true)
-                }
-            }
-           
-        }
 
-        stage('Staging E2E') {
+        stage('Deploy Staging') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.50.1-noble'
@@ -102,12 +80,14 @@ pipeline {
                 }
             }
 
-            environment {
-                CI_ENVIRONMENT_URL = "${STAGING_URL}"
-            }
-
             steps {
                 sh '''
+                    npm install netlify-cli node-jq
+                    node_modules/.bin/netlify --version
+                    echo "Deploy to staging SiteID: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --json > deploy_output.json
+                    CI_ENVIRONMENT_URL = $(node_modules/.bin/node-jq -r '.deploy_url' deploy_output.json)
                     npx playwright test  --reporter=html
                 '''
             }
@@ -126,24 +106,6 @@ pipeline {
                 }
             }
         }
-        // stage('Deploy production') {
-        //     agent {
-        //         docker {
-        //             image 'node:18-alpine'
-        //             reuseNode true
-        //         }
-        //     }
-        //     steps {
-        //         sh '''
-        //             echo "Small changes"
-        //             npm install netlify-cli
-        //             node_modules/.bin/netlify --version
-        //             echo "Deploy to production SiteID: $NETLIFY_SITE_ID"
-        //             node_modules/.bin/netlify status
-        //             node_modules/.bin/netlify deploy --dir=build --prod
-        //         '''
-        //     }
-        // }
         stage('Deploy Production') {
             agent {
                 docker {
