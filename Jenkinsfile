@@ -86,7 +86,10 @@ pipeline {
                     echo "Deploy to staging SiteID: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
                     node_modules/.bin/netlify deploy --dir=build --json > deploy_output.json
-                    node_modules/.bin/node-jq -r '.deploy_url' deploy_output.json
+                    script{
+                        env.URL = node_modules/.bin/node-jq -r '.deploy_url' deploy_output.json
+                    }
+                    
                 '''
             }
         }
@@ -129,6 +132,7 @@ pipeline {
 
             steps {
                 sh '''
+                    echo '$env.URL'
                     npx playwright test  --reporter=html
                 '''
             }
