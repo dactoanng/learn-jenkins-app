@@ -126,25 +126,25 @@ pipeline {
                 }
             }
         }
-        stage('Deploy production') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
-                    echo "Small changes"
-                    npm install netlify-cli
-                    node_modules/.bin/netlify --version
-                    echo "Deploy to production SiteID: $NETLIFY_SITE_ID"
-                    node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build --prod
-                '''
-            }
-        }
-        stage('Prod E2E') {
+        // stage('Deploy production') {
+        //     agent {
+        //         docker {
+        //             image 'node:18-alpine'
+        //             reuseNode true
+        //         }
+        //     }
+        //     steps {
+        //         sh '''
+        //             echo "Small changes"
+        //             npm install netlify-cli
+        //             node_modules/.bin/netlify --version
+        //             echo "Deploy to production SiteID: $NETLIFY_SITE_ID"
+        //             node_modules/.bin/netlify status
+        //             node_modules/.bin/netlify deploy --dir=build --prod
+        //         '''
+        //     }
+        // }
+        stage('Deploy Production') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.50.1-noble'
@@ -158,7 +158,11 @@ pipeline {
 
             steps {
                 sh '''
-                    echo '$env.URL'
+                    npm install netlify-cli
+                    node_modules/.bin/netlify --version
+                    echo "Deploy to production SiteID: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --prod
                     npx playwright test  --reporter=html
                 '''
             }
